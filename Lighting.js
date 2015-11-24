@@ -83,6 +83,10 @@ function main() {
     return;
   }
 
+  // Register the event handler
+  var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
+  mouseRotation_initEventHandlers(canvas, currentAngle);
+  
   // Set the light color (white)
   gl.uniform3f(u_LightColor, 0.8, 0.8, 0.8);
   // Set the light direction (in the world coordinate)
@@ -94,30 +98,39 @@ function main() {
   var mvpMatrix = new Matrix4();    // Model view projection matrix
   var normalMatrix = new Matrix4(); // Transformation matrix for normals
 
-  // Calculate the model matrix
-  modelMatrix.setRotate(90, 0, 1, 0); // Rotate around the y-axis
-  // Calculate the view projection matrix
-  mvpMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
-  mvpMatrix.lookAt(0, 0, 6, 0, 0, 0, 0, 1, 0);
-  mvpMatrix.multiply(modelMatrix);
-  // Calculate the matrix to transform the normal based on the model matrix
-  normalMatrix.setInverseOf(modelMatrix);
-  normalMatrix.transpose();
+  var tick = function() {      
+    // Calculate the model matrix
+    modelMatrix.setRotate(90, 0, 1, 0); // Rotate around the y-axis
+    // Calculate the view projection matrix
+    mvpMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+    mvpMatrix.lookAt(0, 0, 6, 0, 0, 0, 0, 1, 0);
+    
+    mvpMatrix.rotate(currentAngle[0], 1.0, 0.0, 0.0); // Rotation around x-axis
+    mvpMatrix.rotate(currentAngle[1], 0.0, 1.0, 0.0); // Rotation around y-axis       
+    
+    mvpMatrix.multiply(modelMatrix);
+    // Calculate the matrix to transform the normal based on the model matrix
+    normalMatrix.setInverseOf(modelMatrix);
+    normalMatrix.transpose();
 
-  // Pass the model matrix to u_ModelMatrix
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    // Pass the model matrix to u_ModelMatrix
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-  // Pass the model view projection matrix to u_mvpMatrix
-  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+    // Pass the model view projection matrix to u_mvpMatrix
+    gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
-  // Pass the transformation matrix for normals to u_NormalMatrix
-  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    // Pass the transformation matrix for normals to u_NormalMatrix
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
-  // Clear color and depth buffer
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // Clear color and depth buffer
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Draw the cube
-  gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_SHORT, 0);
+    // Draw the cube
+    gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_SHORT, 0);
+      
+    requestAnimationFrame(tick, canvas); // Request that the browser ?calls tick
+    };
+  tick();   
 }
 
 function initVertexBuffers(gl) { // Create a sphere
