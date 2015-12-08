@@ -42,6 +42,7 @@ var FSHADER_SOURCE =
   '  vec3 ambient = u_AmbientLight * v_Color.rgb;\n' +
   '  gl_FragColor = vec4(diffuse + ambient, v_Color.a);\n' +
   '}\n';
+  
 
 function main() {
   // Retrieve <canvas> element
@@ -70,7 +71,8 @@ function main() {
   // Set the clear color and enable the depth test
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
-
+  //light position variables, light position x light position y
+  var lpX,lpY;
   // Get the storage locations of uniform variables
   var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
@@ -82,6 +84,10 @@ function main() {
     console.log('Failed to get the storage location');
     return;
   }
+  
+
+  
+  
 
   // Register the event handler
   var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
@@ -97,6 +103,45 @@ function main() {
   var modelMatrix = new Matrix4();  // Model matrix
   var mvpMatrix = new Matrix4();    // Model view projection matrix
   var normalMatrix = new Matrix4(); // Transformation matrix for normals
+  var lpX=5.0;
+  var lpY=8.0;
+    //set eventhandler for the rotation from keyboard input functionallity
+  document.addEventListener('keydown', function(ev) {
+	  
+	  // if the coutners exceed 36 we unsure that they arent continually increasing so we cant rotate backwards
+	 if(lpX>=36.0){
+		  lpX=36.0;
+	  }else if(lpX<=-36.0){
+		  lpX=-36.0;
+	  }
+	  
+	if(lpY>=36.0){
+		  lpY=36.0;
+	  }else if(lpY<=-36.0){
+		  lpY=-36.0;
+	  }
+	  
+	  // handles the keyboard input so we can rotate that lightsource based upon whbich direction we want to rotate.
+	  // does not rotate continuously, rotates left, right , up, down up to 36.0 values
+	if(ev.keyCode == 74) {
+			//alert('j was pressed');
+			lpX-=1.0;
+			
+		}
+		else if(ev.keyCode == 76) {
+			//alert('l was pressed');
+			lpX+=1.0;
+			
+		}else if(ev.keyCode == 73) {
+			//alert('i was pressed');
+			lpY+=1.0
+		}else if(ev.keyCode == 75) {
+			//alert('k was pressed');
+			lpY-=1.0
+		}
+		console.log(lpX);
+		gl.uniform3f(u_LightPosition, lpX, lpY, 7.0);
+		});
 
   var tick = function() {      
     // Calculate the model matrix
@@ -108,6 +153,7 @@ function main() {
     mvpMatrix.rotate(currentAngle[0], 1.0, 0.0, 0.0); // Rotation around x-axis
     mvpMatrix.rotate(currentAngle[1], 0.0, 1.0, 0.0); // Rotation around y-axis       
     
+	
     mvpMatrix.multiply(modelMatrix);
     // Calculate the matrix to transform the normal based on the model matrix
     normalMatrix.setInverseOf(modelMatrix);
